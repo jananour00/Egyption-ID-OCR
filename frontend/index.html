@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Egyptian National ID — OCR Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal-deep: #0E3B36;
+    --teal-mid: #1A5C53;
+    --sand: #F3EDE2;
+    --sand-card: #FBF8F1;
+    --gold: #C9A24B;
+    --ink: #1A1A18;
+    --error: #B5483A;
+    --good: #3E7A5C;
+    --line: rgba(14,59,54,0.14);
+    --radius: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--sand);
+    color: var(--ink);
+    font-family: 'Tajawal', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    background: var(--teal-deep);
+    color: var(--sand-card);
+    padding: 2.4rem 1.5rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(201,162,75,0.06) 0px,
+      rgba(201,162,75,0.06) 2px,
+      transparent 2px,
+      transparent 14px
+    );
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15;
+    position: relative;
+    z-index: 1;
+  }
+  h1 .ar {
+    display: block;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.55em;
+    font-weight: 500;
+    color: rgba(251,248,241,0.65);
+    margin-top: 0.5rem;
+    direction: rtl;
+  }
+
+  /* ── Main layout ── */
+  main {
+    width: 100%;
+    max-width: 760px;
+    padding: 2.5rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  /* ── Upload viewfinder ── */
+  .viewfinder {
+    position: relative;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--sand-card);
+    aspect-ratio: 8 / 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    overflow: hidden;
+  }
+  .viewfinder:hover, .viewfinder.drag {
+    border-color: var(--gold);
+    background: #FAF4E7;
+  }
+  .viewfinder img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #fff;
+  }
+  .vf-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--teal-mid);
+    opacity: 0.55;
+  }
+  .vf-corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .vf-corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+  .vf-corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+  .vf-corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+  .vf-placeholder {
+    text-align: center;
+    color: var(--teal-mid);
+    padding: 1.5rem;
+  }
+  .vf-placeholder .icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .vf-placeholder p { font-size: 0.95rem; }
+  .vf-placeholder .hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    color: #8A8275;
+    margin-top: 0.4rem;
+  }
+
+  input[type="file"] { display: none; }
+
+  /* ── Action row ── */
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  button {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.85rem 1.6rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--teal-deep);
+    color: var(--sand-card);
+    flex: 1;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--teal-mid); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--teal-deep);
+    border: 1px solid var(--line);
+  }
+  .btn-secondary:hover { border-color: var(--teal-mid); }
+
+  .api-config {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: #8A8275;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .api-config input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--sand-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 0.4rem 0.6rem;
+    flex: 1;
+    color: var(--ink);
+  }
+
+  /* ── Results ── */
+  .results {
+    display: none;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--sand-card);
+    overflow: hidden;
+  }
+  .results.show { display: block; }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: rgba(14,59,54,0.03);
+  }
+  .results-header h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+  .status-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+  }
+  .status-pill.ok { background: rgba(62,122,92,0.12); color: var(--good); }
+  .status-pill.warn { background: rgba(181,72,58,0.1); color: var(--error); }
+
+  .field {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .field:last-child { border-bottom: none; }
+
+  .field-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8A8275;
+    display: flex;
+    justify-content: space-between;
+  }
+  .field-value {
+    font-size: 1.15rem;
+    font-weight: 500;
+  }
+  .field-value.ar {
+    direction: rtl;
+    font-family: 'Tajawal', sans-serif;
+    text-align: right;
+  }
+  .field-value.id {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+  .field-value.empty {
+    color: #BDB6A8;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1rem;
+  }
+  .field-error {
+    font-size: 0.78rem;
+    color: var(--error);
+  }
+
+  .meta-row {
+    padding: 0.85rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #8A8275;
+    display: flex;
+    justify-content: space-between;
+    background: rgba(14,59,54,0.03);
+  }
+
+  .error-box {
+    display: none;
+    border: 1px solid rgba(181,72,58,0.3);
+    background: rgba(181,72,58,0.06);
+    color: var(--error);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  .error-box.show { display: block; }
+
+  .loading {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--teal-mid);
+  }
+  .loading.show { display: flex; }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--line);
+    border-top-color: var(--teal-mid);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer {
+    padding: 1.5rem;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: #B0A998;
+  }
+  footer a { color: var(--teal-mid); text-decoration: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; border-top-color: var(--teal-mid); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Optical Character Recognition · بطاقة الرقم القومي</div>
+  <h1>
+    Egyptian National ID — OCR
+    <span class="ar">استخراج البيانات من بطاقة الرقم القومي</span>
+  </h1>
+</header>
+
+<main>
+
+  <label class="viewfinder" id="dropzone">
+    <div class="vf-corner tl"></div>
+    <div class="vf-corner tr"></div>
+    <div class="vf-corner bl"></div>
+    <div class="vf-corner br"></div>
+    <div class="vf-placeholder" id="placeholder">
+      <span class="icon">🪪</span>
+      <p>Click or drop an ID card image here</p>
+      <p class="hint">JPG / PNG · MAX 10MB</p>
+    </div>
+    <img id="preview" style="display:none" />
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/jpg,image/webp" />
+  </label>
+
+  <div class="actions">
+    <button class="btn-primary" id="extractBtn" disabled>Extract Data</button>
+    <button class="btn-secondary" id="resetBtn">Reset</button>
+  </div>
+
+  <div class="api-config">
+    <span>API&nbsp;ENDPOINT</span>
+    <input type="text" id="apiUrl" value="http://localhost:8000" />
+  </div>
+
+  <div class="loading" id="loading">
+    <span class="spinner"></span>
+    <span>Running pre-processing + OCR pipeline…</span>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <section class="results" id="results">
+    <div class="results-header">
+      <h2>Extracted Fields</h2>
+      <span class="status-pill" id="statusPill">—</span>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Full Name · الاسم</span>
+        <span id="nameStatus"></span>
+      </div>
+      <div class="field-value ar" id="nameValue">—</div>
+      <div class="field-error" id="nameError"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>Address · العنوان</span>
+        <span id="addressStatus"></span>
+      </div>
+      <div class="field-value ar" id="addressValue">—</div>
+      <div class="field-error" id="addressError"></div>
+    </div>
+
+    <div class="field">
+      <div class="field-label">
+        <span>National ID · الرقم القومي</span>
+        <span id="nidStatus"></span>
+      </div>
+      <div class="field-value id" id="nidValue">—</div>
+      <div class="field-error" id="nidError"></div>
+    </div>
+
+    <div class="meta-row">
+      <span id="metaEngine">engine: —</span>
+      <span id="metaTime">—</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Pre-processing → OpenCV &nbsp;·&nbsp; Detection/Recognition → EasyOCR (ar+en) &nbsp;·&nbsp;
+  <a href="https://github.com" target="_blank">source on GitHub</a>
+</footer>
+
+<script>
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('fileInput');
+  const preview    = document.getElementById('preview');
+  const placeholder= document.getElementById('placeholder');
+  const extractBtn = document.getElementById('extractBtn');
+  const resetBtn   = document.getElementById('resetBtn');
+  const apiUrlInput= document.getElementById('apiUrl');
+  const loading    = document.getElementById('loading');
+  const errorBox   = document.getElementById('errorBox');
+  const results    = document.getElementById('results');
+
+  let selectedFile = null;
+
+  // ── File selection ──
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+  });
+
+  // ── Drag & drop ──
+  ['dragenter','dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add('drag'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove('drag'); })
+  );
+  dropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) return;
+    selectedFile = file;
+    const url = URL.createObjectURL(file);
+    preview.src = url;
+    preview.style.display = 'block';
+    placeholder.style.display = 'none';
+    extractBtn.disabled = false;
+    hideResults();
+  }
+
+  function hideResults() {
+    results.classList.remove('show');
+    errorBox.classList.remove('show');
+  }
+
+  resetBtn.addEventListener('click', () => {
+    selectedFile = null;
+    fileInput.value = '';
+    preview.style.display = 'none';
+    placeholder.style.display = 'block';
+    extractBtn.disabled = true;
+    hideResults();
+  });
+
+  // ── Submit to API ──
+  extractBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    hideResults();
+    loading.classList.add('show');
+    extractBtn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    const baseUrl = apiUrlInput.value.replace(/\/$/, '');
+
+    try {
+      const res = await fetch(`${baseUrl}/extract`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.detail || `Request failed with status ${res.status}`);
+      }
+
+      const json = await res.json();
+      renderResults(json);
+
+    } catch (err) {
+      errorBox.textContent = `⚠ ${err.message} — check that the API endpoint is reachable and CORS is enabled.`;
+      errorBox.classList.add('show');
+    } finally {
+      loading.classList.remove('show');
+      extractBtn.disabled = false;
+    }
+  });
+
+  function fieldStatus(valid) {
+    return valid
+      ? '<span style="color:var(--good)">✓</span>'
+      : '<span style="color:var(--error)">✗</span>';
+  }
+
+  function setField(prefix, value, validation) {
+    const valueEl = document.getElementById(`${prefix}Value`);
+    const statusEl = document.getElementById(`${prefix}Status`);
+    const errorEl = document.getElementById(`${prefix}Error`);
+
+    if (value) {
+      valueEl.textContent = value;
+      valueEl.classList.remove('empty');
+    } else {
+      valueEl.textContent = 'not detected';
+      valueEl.classList.add('empty');
+    }
+
+    statusEl.innerHTML = fieldStatus(validation.valid);
+    errorEl.textContent = validation.valid ? '' : (validation.error || '');
+  }
+
+  function renderResults(json) {
+    const data = json.data || {};
+    const val = json.validation || {};
+
+    setField('name', data.name, val.name || { valid: false });
+    setField('address', data.address, val.address || { valid: false });
+    setField('nid', data.national_id, val.national_id || { valid: false });
+
+    const pill = document.getElementById('statusPill');
+    if (json.success) {
+      pill.textContent = 'Valid';
+      pill.className = 'status-pill ok';
+    } else {
+      pill.textContent = 'Needs Review';
+      pill.className = 'status-pill warn';
+    }
+
+    document.getElementById('metaEngine').textContent = `engine: ${data.engine || '—'}`;
+    document.getElementById('metaTime').textContent =
+      json.processing_time_ms != null ? `${json.processing_time_ms} ms` : '';
+
+    results.classList.add('show');
+  }
+</script>
+
+</body>
+</html>

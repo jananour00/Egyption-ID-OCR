@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OCR model caches
+.EasyOCR/
+~/.paddleocr/
+
+# Debug / output artifacts
+debug/
+evaluation_report.json
+result.json
+
+# Sensitive sample data — DO NOT COMMIT REAL ID IMAGES
+samples/real_*
+*.jpg.real
+
+# Env
+.env
+
+# OS
+.DS_Store

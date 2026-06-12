@@ -1,0 +1,18 @@
+# ── Core ──
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0          # Used by generate_samples.py for Arabic text rendering
+
+# ── OCR engines (install at least one) ──
+easyocr>=1.7.1          # Primary  — arabic + english, no extra setup
+# paddleocr>=2.7.0      # Fallback — uncomment if you prefer PaddleOCR
+# paddlepaddle>=2.5.0   # Required by PaddleOCR
+
+# ── API ──
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9  # Required for FastAPI file uploads
+
+# ── Dev / evaluation ──
+pytest>=8.0.0
+httpx>=0.27.0            # For FastAPI test client
